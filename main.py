@@ -18,20 +18,37 @@ def get_bot_response(client: OpenAI, message: str) -> str:
     )
     return response.output_text
 
+
+def read_multiline_text() -> str:
+    print('Introduce el texto que quieres resumir.')
+    print("Cuando termines, escribe 'FIN' en una línea nueva.\n")
+
+    lines = []
+
+    while True:
+        line = input()
+
+        if line.strip().upper() == 'FIN':
+            break
+
+        lines.append(line)
+
+    return '\n'.join(lines).strip()
+
 def summarize_text(client: OpenAI, text: str) -> str:
     prompt = f'Resume el siguiente texto de forma clara y concisa:\n\n{text}'
     return get_bot_response(client=client, message=prompt)
 
 def main() -> None:
     ai_client = build_client()
-    text = input('Porfavor introduce el texto que quieres resumir: ').strip()
+    text = read_multiline_text()
 
     if not text:
-        print('No has introducido ningun texto.')
+        print('No has introducido ningún texto.')
         return
 
     summary = summarize_text(ai_client, text)
-    print(f'\nResumen: \n{summary}')
+    print(f'\nResumen:\n{summary}')
 
 if __name__ == '__main__':
     main()
