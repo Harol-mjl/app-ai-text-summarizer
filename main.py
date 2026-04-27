@@ -3,52 +3,57 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
+
 def build_client() -> OpenAI:
     load_dotenv()
-    api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        raise Exception('OpenAI API key is required.')
+    api_key_openai = os.getenv("OPENAI_API_KEY")
 
-    return OpenAI(api_key=api_key)
+    if not api_key_openai:
+        raise ValueError("OpenAI API key is required")
 
-def get_bot_response(client: OpenAI, message: str) -> str:
+    return OpenAI(api_key=api_key_openai)
+
+
+def get_bot_response(client: OpenAI, text: str) -> str:
     response = client.responses.create(
         model='gpt-4.1-mini',
-        input=message,
+        input=text,
     )
     return response.output_text
 
 
-def read_multiline_text() -> str:
-    print('Introduce el texto que quieres resumir.')
-    print("Cuando termines, escribe 'FIN' en una línea nueva.\n")
+def ideas_bot_response(client: OpenAI, text: str) -> str:
+    prompt = f"""Dame 5 ideas sobre el siguiente tema:
 
-    lines = []
+    {text}
 
-    while True:
-        line = input()
+    Para cada idea usa EXACTAMENTE este formato:
 
-        if line.strip().upper() == 'FIN':
-            break
+    1. Nombre:
+    2. Descripción:
+    3. Nivel de dificultad (bajo, medio, alto).
+     
+    No añadas texto fuera de este formato.
+    Responde en español.
+    """
+    return get_bot_response(client, prompt)
 
-        lines.append(line)
 
-    return '\n'.join(lines).strip()
+def get_text() -> str:
+    text = input("Introduce un tema: ")
+    return text.strip()
 
-def summarize_text(client: OpenAI, text: str) -> str:
-    prompt = f'Resume el siguiente texto de forma clara y concisa:\n\n{text}'
-    return get_bot_response(client=client, message=prompt)
 
 def main() -> None:
-    ai_client = build_client()
-    text = read_multiline_text()
+    print('=== AI Idea Generator ===')
+    client = build_client()
+    text = get_text()
 
     if not text:
-        print('No has introducido ningún texto.')
         return
-
-    summary = summarize_text(ai_client, text)
-    print(f'\nResumen:\n{summary}')
+    response = ideas_bot_response(client, text)
+    print(f'Ideas generadas:')
+    print(response)
 
 if __name__ == '__main__':
     main()
