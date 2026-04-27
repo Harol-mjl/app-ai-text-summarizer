@@ -15,60 +15,60 @@ def build_client() -> OpenAI:
     return OpenAI(api_key=api_key_openai)
 
 
-def get_bot_response(client: OpenAI, text: str) -> str:
+def get_bot_response(client: OpenAI, prompt: str) -> str:
     response = client.responses.create(
         model='gpt-4.1-mini',
-        input=text,
+        input=prompt,
     )
     return response.output_text
 
 
-def ideas_bot_response(client: OpenAI, text: str) -> str:
-    prompt = f"""Dame 5 ideas sobre el siguiente tema:
-
-    {text}
-
-    devuelvelo  en formato JSON con esta estructura:
-    [
-        {{
-            "name": "",
-            "description": "",
-            "difficulty": ""
-        }}
-    ]
-    No uses Markdown.
-    No usues bloques de codigo
-    No añadas texto fuera del JSON
+def translate_text(
+        client: OpenAI,
+        text: str,
+        dst_lang: str,
+        tone: str,
+) -> str:
+    prompt = f"""Traduce este texto {text} en este idioma {dst_lang} y con este tono {tone}
+    Solo quiero la traduccion no incluyas nada mas
     """
-    return get_bot_response(client, prompt)
+    return get_bot_response(client=client, prompt=prompt.strip())
 
 
 def get_text() -> str:
-    text = input("Introduce un tema: ")
+    text = input("Introduce un texto a traducir: ")
     return text.strip()
 
 
+def get_dst_lang() -> str:
+    text = input("Introduce idioma destino: ")
+    return text.strip().lower()
+
+
+def get_tone() -> str:
+    text = input("Introduce tono: ")
+    return text.strip().lower()
+
+
 def main() -> None:
-    print('=== AI Idea Generator ===')
+    print('=== AI smart Translator ===')
     client = build_client()
     text = get_text()
+    dst_lang = get_dst_lang()
+    tone = get_tone()
 
     if not text:
+        print("No has introducido texto")
         return
-    response = ideas_bot_response(client, text)
 
-    try:
-        ideas = json.loads(response)
+    if not dst_lang:
+        print("No has introducido lenguaje destino")
+        return
 
-        for i, idea in enumerate(ideas, start=1):
-            print(f"Idea {i}:")
-            print(f"  Nombre: {idea['name']}")
-            print(f"  Descripción: {idea['description']}")
-            print(f"  Dificultad: {idea['difficulty']}\n")
-
-    except json.JSONDecodeError:
-        print("Error al parsear JSON. Respuesta original:")
-        print(response)
-
+    if not tone:
+        tone = "natural"
+    
+    response = translate_text(client, text, dst_lang, tone)
+    print(f"Traduccion: {response}")
 if __name__ == '__main__':
     main()
