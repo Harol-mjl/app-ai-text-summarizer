@@ -1,4 +1,5 @@
 import os
+import json
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -27,14 +28,17 @@ def ideas_bot_response(client: OpenAI, text: str) -> str:
 
     {text}
 
-    Para cada idea usa EXACTAMENTE este formato:
-
-    1. Nombre:
-    2. Descripción:
-    3. Nivel de dificultad (bajo, medio, alto).
-     
-    No añadas texto fuera de este formato.
-    Responde en español.
+    devuelvelo  en formato JSON con esta estructura:
+    [
+        {{
+            "name": "",
+            "description": "",
+            "difficulty": ""
+        }}
+    ]
+    No uses Markdown.
+    No usues bloques de codigo
+    No añadas texto fuera del JSON
     """
     return get_bot_response(client, prompt)
 
@@ -52,8 +56,19 @@ def main() -> None:
     if not text:
         return
     response = ideas_bot_response(client, text)
-    print(f'Ideas generadas:')
-    print(response)
+
+    try:
+        ideas = json.loads(response)
+
+        for i, idea in enumerate(ideas, start=1):
+            print(f"Idea {i}:")
+            print(f"  Nombre: {idea['name']}")
+            print(f"  Descripción: {idea['description']}")
+            print(f"  Dificultad: {idea['difficulty']}\n")
+
+    except json.JSONDecodeError:
+        print("Error al parsear JSON. Respuesta original:")
+        print(response)
 
 if __name__ == '__main__':
     main()
